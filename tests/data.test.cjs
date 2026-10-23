@@ -81,3 +81,41 @@ test('等级、勋章与企业汇总对应当前人群快照',()=>{
   assert.equal(a.summary.risk,a.memberRows.filter(u=>u.noLearningDays>=7&&u.noLearningDays<14).length);
   assert(a.memberRows.every(u=>/L[1-4]/.test(u.level)));
 });
+
+const P=require('../dimensions.js');
+const dimensions=P.build(a);
+test('个人、公司与员工维度的人数及任务汇总守恒，内部员工不归入经销商',()=>{
+  assert.equal(dimensions.dealers.length,300);assert.equal(dimensions.employees.length,60);
+  assert.equal(dimensions.companies.length,12);assert.equal(dimensions.departments.length,5);
+  assert(dimensions.employees.every(u=>u.orgId==='MLK'&&u.department&&u.employeeNumber));
+  assert(dimensions.dealers.every(u=>u.orgId!=='MLK'&&!u.department&&!u.employeeNumber));
+  assert.equal(D.sum(dimensions.companies,'members'),dimensions.dealers.length);
+  assert.equal(D.sum(dimensions.departments,'members'),dimensions.employees.length);
+  assert.equal(D.sum(dimensions.regions,'members'),a.summary.members);
+  assert.equal(dimensions.all.assigned,a.summary.enrollments);
+  assert.equal(dimensions.all.finished,a.summary.completed);
+  assert.equal(dimensions.all.passed,a.summary.passed);
+  assert.equal(dimensions.all.minutes,a.summary.minutes);
+});
+test('公司与部门比率来自任务分子分母，不平均个人百分比',()=>{
+  for(const g of [...dimensions.companies,...dimensions.departments,...dimensions.regions]){
+    assert.equal(g.completion,D.pct(D.sum(g.people,'finished'),D.sum(g.people,'assigned')));
+    assert.equal(g.requiredRate,D.pct(D.sum(g.people,'requiredDone'),D.sum(g.people,'required')));
+    assert.equal(g.passRate,D.pct(D.sum(g.people,'passed'),D.sum(g.people,'attempted')));
+    assert.equal(g.assigned,D.sum(g.competencies,'assigned'));
+    assert.equal(g.finished,D.sum(g.competencies,'completed'));
+  }
+});
+test('员工部门、岗位、区域交叉筛选传递至全部事实记录',()=>{
+  const sample=D.users.find(u=>u.identity==='员工'),b=D.analyze({...filters,identity:'员工',organization:'MLK',region:sample.region,department:sample.department,jobRole:sample.jobRole}),p=P.build(b);
+  assert(p.people.length>0);assert(p.people.every(u=>u.department===sample.department&&u.jobRole===sample.jobRole&&u.region===sample.region));
+  assert.equal(p.companies.length,0);assert.equal(p.dealers.length,0);
+  const ids=new Set(p.people.map(u=>u.id));
+  for(const facts of [b.events,b.cohort,b.attempts,b.ledger,b.allSubmissions])assert(facts.every(f=>ids.has(f.userId)));
+  assert.equal(p.departments.length,1);
+});
+test('无任务人群在组织热力图与比率中保持零值',()=>{
+  const p=P.build(D.analyze({...filters,start:'2026-04-01',end:'2026-04-01'}));
+  assert.equal(p.all.assigned,0);assert.equal(p.all.completion,0);
+  for(const g of [...p.companies,...p.departments])assert(g.competencies.every(c=>c.assigned===0&&c.rate===0));
+});

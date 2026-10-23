@@ -1,8 +1,8 @@
 {
   "name": "milliken-center-dashboard",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "美利肯学习成长中心数据看板第一版交互 Demo",
+  "description": "美利肯学习成长中心多维学习成长驾驶舱交互 Demo",
   "scripts": {
     "dev": "node server.mjs",
     "start": "node server.mjs",
