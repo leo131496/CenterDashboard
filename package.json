@@ -1,0 +1,14 @@
+{
+  "name": "milliken-center-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "美利肯学习成长中心数据看板第一版交互 Demo",
+  "scripts": {
+    "dev": "node server.mjs",
+    "start": "node server.mjs",
+    "test": "node --test tests/data.test.cjs",
+    "test:ui": "node tests/ui.cjs"
+  },
+  "devDependencies": { "playwright": "^1.58.0" },
+  "engines": { "node": ">=20" }
+}

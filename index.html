@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#ff714b">
+  <meta name="description" content="美利肯学习成长中心数据看板第一版交互演示，覆盖课程、智库、考试、成长激励与内容治理。">
+  <title>数据看板 · 美利肯学习成长中心</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="data.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <aside class="sidebar" id="sidebar">
+    <a href="#overview" class="brand" aria-label="美利肯学习成长中心首页"><span class="brand-symbol">m<span>+</span></span><div><strong>Milliken</strong><small>美利肯 · 学习成长中心</small></div></a>
+    <div class="workspace-label">管理工作台 <span>WORKSPACE</span></div>
+    <nav aria-label="主导航">
+      <button class="side-item" data-source="home"><span class="nav-icon" data-icon="home"></span>工作台首页<span class="chevron">›</span></button>
+      <button class="side-item" data-source="members"><span class="nav-icon" data-icon="users"></span>会员管理<span class="chevron">›</span></button>
+      <button class="side-item" data-source="materials"><span class="nav-icon" data-icon="folder"></span>素材中心<span class="chevron">›</span></button>
+      <div class="nav-divider"></div>
+      <div class="side-parent"><span class="nav-icon" data-icon="book"></span>学习成长中心 <span class="tiny-badge">NEW</span><span class="chevron">⌄</span></div>
+      <a class="side-child active" href="#overview" id="dashboard-link"><span class="nav-icon" data-icon="chart"></span>数据看板<span class="new-dot"></span></a>
+      <button class="side-child" data-source="knowledge"><span class="nav-icon" data-icon="layers"></span>知识库管理<span class="chevron">›</span></button>
+      <button class="side-child" data-source="courses"><span class="nav-icon" data-icon="play"></span>课程学习管理<span class="chevron">›</span></button>
+      <button class="side-child" data-source="exams"><span class="nav-icon" data-icon="edit"></span>试题管理<span class="chevron">›</span></button>
+      <button class="side-child" data-source="growth"><span class="nav-icon" data-icon="trending"></span>学员成长值管理<span class="chevron">›</span></button>
+      <button class="side-child" data-source="badges"><span class="nav-icon" data-icon="award"></span>勋章管理<span class="chevron">›</span></button>
+    </nav>
+    <div class="sidebar-bottom"><div class="demo-marker"><span></span>第一版交互演示 <b>V1.0</b></div><button data-action="coverage"><span data-icon="help"></span>功能覆盖与指标说明 <span>↗</span></button></div>
+  </aside>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="breadcrumb"><button class="icon-button mobile-menu" aria-label="展开导航" data-action="menu"><span data-icon="menu"></span></button><span>学习成长中心</span><i>/</i><strong>数据看板</strong></div>
+      <div class="topbar-right"><span class="environment"><i></i>演示环境</span><button class="icon-button" data-action="help" aria-label="使用帮助"><span data-icon="help"></span></button><div class="user-avatar">M</div><span class="user-name">美利肯管理员</span></div>
+    </header>
+    <main>
+      <section class="page-heading"><div><div class="eyebrow">LEARNING & GROWTH ANALYTICS</div><h1>数据看板<span class="version">V1.0</span></h1><p>让每一次学习，都成为看得见的成长。</p></div><div class="heading-actions"><button class="button" data-action="definitions"><span data-icon="info"></span>指标口径</button><button class="button primary" data-action="export"><span data-icon="download"></span>导出数据</button></div></section>
+      <div class="tabs" role="tablist" aria-label="看板分析主题" id="tabs"></div>
+      <section class="filter-panel" aria-label="筛选条件">
+        <div class="filter-top"><div class="period-switch" aria-label="日期快捷选择"><button data-period="7">近7天</button><button data-period="30">近30天</button><button data-period="month" class="selected">本月</button><button data-period="quarter">本季度</button></div><div class="date-range"><span data-icon="calendar"></span><input type="date" id="start-date" aria-label="开始日期" value="2026-10-01"><span>至</span><input type="date" id="end-date" aria-label="结束日期" value="2026-10-23"></div><span class="timezone">北京时间</span></div>
+        <div class="filter-bottom"><label>区域<select id="region"><option value="all">全部区域</option></select></label><label>所属企业<select id="organization"><option value="all">全部企业</option></select></label><label>学员身份<select id="identity"><option value="all">全部身份</option><option>经销商</option><option>员工</option></select></label><button class="text-button" data-action="reset">重置筛选</button><span class="data-note"><span class="status-dot"></span>模拟数据 · 截至 2026/10/23</span></div>
+        <p class="filter-error" id="filter-error" role="alert" hidden></p>
+      </section>
+      <div class="scope-note" id="scope-note"></div>
+      <div id="view" aria-live="polite"></div>
+      <footer><span>Milliken · 学习成长中心</span><span>第一版功能演示 · 所有数字均为模拟数据</span><button data-action="coverage">查看功能覆盖 ↗</button></footer>
+    </main>
+  </div>
+  <dialog id="detail-dialog"><div class="dialog-heading"><div><small id="dialog-eyebrow">数据明细</small><h2 id="dialog-title"></h2></div><button class="icon-button" data-action="close-dialog" aria-label="关闭弹窗"><span data-icon="close"></span></button></div><div id="dialog-content"></div></dialog>
+  <div id="toast" role="status"></div>
+</body>
+</html>
