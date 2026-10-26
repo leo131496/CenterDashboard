@@ -16,10 +16,10 @@
    if(s.local.start&&s.local.start<global.start)s.local.start=global.start;
    if(s.local.end&&s.local.end>global.end)s.local.end=global.end;
    if((s.local.start||global.start)>(s.local.end||global.end)){delete s.local.start;delete s.local.end;}
-   for(const k of ['organization','identity','department'])if(global[k]&&global[k]!=='all')delete s.local[k];
+   for(const k of ['organization','identity','salesRegion'])if(global[k]&&global[k]!=='all')delete s.local[k];
    const identity=global.identity!=='all'?global.identity:A.catalog[key].identity||s.local.identity;
    if(s.local.organization){const o=D.organizations.find(o=>o.id===s.local.organization);if(o&&identity&&identity!=='all'&&(o.kind==='dealer'?'经销商':'员工')!==identity)delete s.local.organization;}
-   if(identity!=='员工')delete s.local.department;
+   if(identity!=='员工')delete s.local.salesRegion;
    if(before!==JSON.stringify(s.local))s.notice='单图条件已随全局范围调整。';
    s.error='';s.draft=null;s.signature='';
   }}
@@ -38,7 +38,7 @@
    <label>结束日期<input type="date" data-chart-field="end" aria-label="${esc(c.title)}单图结束日期" min="${global.start}" max="${global.end}" value="${l.end||global.end}"></label>
    ${!fixedIdentity?`<label>学员身份<select data-chart-field="identity" aria-label="${esc(c.title)}单图身份">${option('all','跟随全局身份',l.identity||'all')}${['经销商','员工'].map(v=>option(v,v,l.identity)).join('')}</select></label>`:''}
    ${global.organization==='all'?`<label>所属企业<select data-chart-field="organization" aria-label="${esc(c.title)}单图企业">${option('all','当前范围内全部企业',l.organization||'all')}${companies.map(o=>option(o.id,o.name,l.organization)).join('')}</select></label>`:''}
-   ${identity==='员工'&&global.department==='all'?`<label>员工部门<select data-chart-field="department" aria-label="${esc(c.title)}单图员工部门">${option('all','当前范围内全部部门',l.department||'all')}${D.departments.map(v=>option(v,v,l.department)).join('')}</select></label>`:''}
+   ${identity==='员工'&&global.salesRegion==='all'?`<label>销售区域<select data-chart-field="salesRegion" aria-label="${esc(c.title)}单图销售区域">${option('all','当前范围内全部销售区域',l.salesRegion||'all')}${D.salesRegions.map(v=>option(v,v,l.salesRegion)).join('')}</select></label>`:''}
    ${definition.course?`<label>课程分类<select data-chart-field="courseCategory" aria-label="${esc(c.title)}单图课程分类">${option('all','全部课程分类',l.courseCategory||'all')}${A.categories.map(v=>option(v,v,l.courseCategory)).join('')}</select></label><label>关联课程<select data-chart-field="courseId" aria-label="${esc(c.title)}单图课程">${option('all','全部课程',l.courseId||'all')}${D.courses.map(v=>option(v.id,v.name,l.courseId)).join('')}</select></label>`:''}
    ${definition.format?`<label>附件类型<select data-chart-field="format" aria-label="${esc(c.title)}单图附件类型">${option('all','全部附件类型',l.format||'all')}${['音频','图片','PDF','Word','PPT','视频'].map(v=>option(v,v,l.format)).join('')}</select></label>`:''}
    ${definition.keyword?`<label>检索关键词<input type="search" data-chart-field="keyword" aria-label="${esc(c.title)}单图关键词" placeholder="输入关键词" maxlength="50" value="${esc(l.keyword||'')}"></label>`:''}
@@ -48,7 +48,7 @@
   if(l.start||l.end)parts.push(c.filters.start.slice(5)+' — '+c.filters.end.slice(5));
   if(l.identity)parts.push(l.identity);
   if(l.organization)parts.push(D.organizations.find(o=>o.id===l.organization)?.name||'');
-  if(l.department)parts.push(l.department);
+  if(l.salesRegion)parts.push(l.salesRegion);
   if(l.courseCategory)parts.push(l.courseCategory);
   if(l.courseId)parts.push(D.courses.find(v=>v.id===l.courseId)?.name||'');
   if(l.format)parts.push(l.format);
@@ -101,7 +101,7 @@
  function update(key,focus){const el=document.querySelector(`[data-chart-panel="${key}"]`);if(!el)return;const link=get(key).link;el.outerHTML=panel(key,link);bindTooltips();if(focus)document.querySelector(`[data-chart-panel="${key}"] ${focus}`)?.focus();}
  function readDraft(root){const draft={};root.querySelectorAll('[data-chart-field]').forEach(input=>{draft[input.dataset.chartField]=input.value.trim();});return draft;}
  function reset(key){const s=get(key);s.local={};s.draft=null;s.error='';s.notice='';s.signature='';s.open=false;update(key,'[data-chart-action="toggle"]');}
- document.addEventListener('change',e=>{const el=e.target;if(el.matches('[data-chart-field="identity"]')){const root=el.closest('[data-chart-panel]'),key=root.dataset.chartPanel,s=get(key);s.draft=readDraft(root);if(el.value!=='员工')delete s.draft.department;update(key,'[data-chart-field="identity"]');return;}if(!el.matches('[data-chart-type-select]'))return;const key=el.closest('[data-chart-panel]').dataset.chartPanel;if(!allowed[A.catalog[key].kind].includes(el.value))return;if(get(key).open)get(key).draft=readDraft(el.closest('[data-chart-panel]'));types[key]=el.value;try{localStorage.setItem(storageKey,JSON.stringify(types));}catch{storageAvailable=false;}update(key,'[data-chart-type-select]');if(!storageAvailable)notify('图表已切换；当前浏览器未允许保存偏好，本次选择仍有效。');});
+ document.addEventListener('change',e=>{const el=e.target;if(el.matches('[data-chart-field="identity"]')){const root=el.closest('[data-chart-panel]'),key=root.dataset.chartPanel,s=get(key);s.draft=readDraft(root);if(el.value!=='员工')delete s.draft.salesRegion;update(key,'[data-chart-field="identity"]');return;}if(!el.matches('[data-chart-type-select]'))return;const key=el.closest('[data-chart-panel]').dataset.chartPanel;if(!allowed[A.catalog[key].kind].includes(el.value))return;if(get(key).open)get(key).draft=readDraft(el.closest('[data-chart-panel]'));types[key]=el.value;try{localStorage.setItem(storageKey,JSON.stringify(types));}catch{storageAvailable=false;}update(key,'[data-chart-type-select]');if(!storageAvailable)notify('图表已切换；当前浏览器未允许保存偏好，本次选择仍有效。');});
  document.addEventListener('click',e=>{const el=e.target.closest('[data-chart-action]');if(!el)return;const root=el.closest('[data-chart-panel]'),key=root.dataset.chartPanel,s=get(key);switch(el.dataset.chartAction){
   case 'toggle':s.open=!s.open;s.draft=null;s.error='';update(key,'[data-chart-action="toggle"]');break;
   case 'cancel':s.open=false;s.draft=null;s.error='';update(key,'[data-chart-action="toggle"]');break;

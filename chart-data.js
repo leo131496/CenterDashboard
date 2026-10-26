@@ -6,13 +6,13 @@
  const catalog={
   'overview-activity':{title:'学习参与趋势',kind:'trend',subtitle:'每日活跃人数与课程学习人数 · 同一学员每天去重'},
   'overview-companies':{title:'渠道公司 · 学习表现',kind:'ranking',subtitle:'按本期任务完成率排序，展示前6家公司',identity:'经销商',course:true,drill:'company'},
-  'overview-departments':{title:'内部人才 · 部门表现',kind:'ranking',subtitle:'按本期必修任务达成率排序',identity:'员工',course:true,drill:'department'},
+  'overview-sales-regions':{title:'销售区域 · 学习表现',kind:'ranking',subtitle:'按本期必修任务达成率排序',identity:'员工',course:true,drill:'salesRegion'},
   'dealer-themes':{title:'学习主题完成情况',kind:'ranking',subtitle:'按课程分类查看经销商学员的任务完成进度',identity:'经销商',course:true},
   'company-themes':{title:'公司 × 学习主题',kind:'matrix',subtitle:'按任务完成率排序前6家公司，显示完成 / 分配任务数',identity:'经销商',course:true},
   'company-ranking':{title:'渠道公司完成率排行',kind:'ranking',subtitle:'按任务完成率排序，点击公司查看团队',identity:'经销商',course:true,drill:'company'},
-  'employee-themes':{title:'部门 × 学习主题',kind:'matrix',subtitle:'本期任务完成率；部门归属独立于经销商组织',identity:'员工',course:true},
-  'employee-required':{title:'部门必修任务达成',kind:'ranking',subtitle:'本期必修完成数 / 分配数，点击查看部门人员',identity:'员工',course:true,drill:'department'},
-  'employee-roles':{title:'员工岗位学习覆盖',kind:'ranking',subtitle:'本期有课程学习行为人数 / 员工岗位总人数',identity:'员工',course:true},
+  'employee-themes':{title:'销售区域 × 学习主题',kind:'matrix',subtitle:'本期任务完成率；华南、西南销售员工的课程主题完成情况',identity:'员工',course:true},
+  'employee-required':{title:'销售区域必修任务达成',kind:'ranking',subtitle:'本期必修完成数 / 分配数，点击查看销售区域人员',identity:'员工',course:true,drill:'salesRegion'},
+  'employee-coverage':{title:'销售区域学习覆盖',kind:'ranking',subtitle:'本期有课程学习行为人数 / 销售区域员工总人数',identity:'员工',course:true},
   'course-trend':{title:'学习与完成趋势',kind:'trend',subtitle:'学习人数每天去重；完成量包含本期完成的历史任务',course:true},
   'course-types':{title:'修读类型分布',kind:'distribution',subtitle:'本期新分配任务的修读类型构成',course:true},
   'course-popularity':{title:'课程分类热度',kind:'ranking',subtitle:'各分类下课程学习人数之和，跨课程不去重',course:true,count:true},
@@ -33,7 +33,7 @@
   const f={...global};
   f.start=local.start&&local.start>global.start?local.start:global.start;
   f.end=local.end&&local.end<global.end?local.end:global.end;
-  for(const key of ['organization','identity','department'])if(local[key]&&local[key]!=='all'&&(!global[key]||global[key]==='all'))f[key]=local[key];
+  for(const key of ['organization','identity','salesRegion'])if(local[key]&&local[key]!=='all'&&(!global[key]||global[key]==='all'))f[key]=local[key];
   if(definition.identity&&global.identity==='all')f.identity=definition.identity;
   if(definition.course){f.courseCategory=local.courseCategory||'all';f.courseId=local.courseId||'all';}
   return f;
@@ -49,6 +49,11 @@
   const orgId=global.organization!=='all'?global.organization:local.organization;
   const org=D.organizations.find(o=>o.id===orgId),identity=global.identity!=='all'?global.identity:definition.identity||local.identity;
   if(org&&identity&&identity!=='all'&&(org.kind==='dealer'?'经销商':'员工')!==identity)return '所选企业与学员身份不匹配，请调整条件。';
+  if(local.salesRegion&&local.salesRegion!=='all'){
+   if(!D.salesRegions.includes(local.salesRegion))return '请选择有效的销售区域。';
+   if(identity!=='员工')return '销售区域仅适用于美利肯员工。';
+   if(global.salesRegion&&global.salesRegion!=='all'&&local.salesRegion!==global.salesRegion)return '单图销售区域须符合当前全局销售区域范围。';
+  }
   if(definition.course&&local.courseId&&local.courseId!=='all'&&local.courseCategory&&local.courseCategory!=='all'&&D.courses.find(c=>c.id===local.courseId)?.category!==local.courseCategory)return '所选课程与课程分类不匹配。';
   return '';
  }
@@ -63,10 +68,10 @@
   switch(key){
    case 'overview-activity':trend([{key:'active',name:'活跃学员',color:colors[0]},{key:'learners',name:'课程学习人数',color:colors[1]}]);break;
    case 'overview-companies':case 'company-ranking':rank(p.companies.slice(0,6));break;
-   case 'overview-departments':case 'employee-required':rank(p.departments,'requiredRate');break;
+   case 'overview-sales-regions':case 'employee-required':rank(p.salesRegions,'requiredRate');break;
    case 'dealer-themes':out.rows=p.dealer.competencies.filter(c=>!local.courseCategory||local.courseCategory==='all'||c.category===local.courseCategory).map(c=>({name:c.category,value:c.rate,sample:`${c.completed} / ${c.assigned} 项任务`,noSample:!c.assigned}));break;
-   case 'company-themes':case 'employee-themes':out.rows=(key==='company-themes'?p.companies.slice(0,6):p.departments);out.categories=categories.filter(c=>!local.courseCategory||local.courseCategory==='all'||c===local.courseCategory);break;
-   case 'employee-roles':rank(p.roles,'coverage');break;
+   case 'company-themes':case 'employee-themes':out.rows=(key==='company-themes'?p.companies.slice(0,6):p.salesRegions);out.categories=categories.filter(c=>!local.courseCategory||local.courseCategory==='all'||c===local.courseCategory);break;
+   case 'employee-coverage':rank(p.salesRegions,'coverage');break;
    case 'course-trend':trend([{key:'learners',name:'学习人数',color:colors[0]},{key:'completed',name:'完成人次',color:colors[1]}]);break;
    case 'course-types':distribution(['必修','选修','直接分配'].map(name=>({name,value:D.sum(m.courseRows.filter(c=>c.required===name),'assigned')})),'分配总人次');break;
    case 'course-popularity':out.rows=categories.filter(c=>!local.courseCategory||local.courseCategory==='all'||c===local.courseCategory).map(name=>({name,value:D.sum(m.courseRows.filter(c=>c.category===name),'participants')}));break;

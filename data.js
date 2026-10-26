@@ -10,15 +10,14 @@
   const unique=xs=>[...new Set(xs)];
   function random(seed=131496){let s=seed;return()=>{s=(Math.imul(s,1664525)+1013904223)>>>0;return s/4294967296;};}
   const rand=random(),int=(a,b)=>Math.floor(rand()*(b-a+1))+a,pick=a=>a[int(0,a.length-1)];
-  const departments=['销售与渠道部','产品与技术部','市场与品牌部','客户服务部','培训与发展部'];
-  const employeeRoles=['区域经理','产品专员','市场专员','客户顾问','培训讲师'];
+  const salesRegions=['华南','西南'];
   const companyNames=['上海启程地材','杭州致远空间','广州和盛地材','深圳博雅空间','北京弘远地材','天津嘉禾空间','武汉新境地材','长沙尚品空间','成都汇美地材','重庆悦境空间','西安华辰地材','兰州和创空间'];
   const organizations=companyNames.map((name,i)=>({id:'ORG'+(i+1),name:name+'（示例）',kind:'dealer'})).concat([{id:'MLK',name:'美利肯中国（示例）',kind:'internal'}]);
   const courses=[
     ['Terra 泰拉产品培训','产品系列','录播','必修',45],['Gentle Touch 触感产品培训','产品系列','录播','必修',40],['2026 安装标准与施工规范','安装培训','录播','必修',60],['Screenplay 艺境屏风','产品系列','录播','选修',36],['On the Tracks 轨迹','产品系列','录播','选修',42],['美利肯品牌与可持续发展','品牌知识','图文','必修',20],['Air Born 气流产品培训','产品系列','录播','选修',35],['设计师沟通与方案演示','销售技能','直播','选修',55],['Warp & Weft 缇薇雅集','产品系列','录播','选修',38],['产品应用与日常维护','安装培训','图文','必修',25],['Symmetry 衡系列新品分享','产品系列','直播','选修',50],['经销商服务与客户体验','销售技能','图文','直接分配',30]
   ].map((a,i)=>({id:'C'+(i+1),name:a[0],category:a[1],type:a[2],required:a[3],minutes:a[4],enabled:i!==11,created:addDays('2026-06-01',i*9),examId:'E'+(i+1)}));
   const exams=courses.map((c,i)=>({id:c.examId,name:c.name+'认证考试',courseId:c.id,category:c.category,questionCount:20,passScore:60,enabled:c.enabled,source:['手动添加','题库添加','模板导入'][i%3]}));
-  const users=Array.from({length:360},(_,i)=>{const org=organizations[i%12],employee=Math.floor(i/12)%6===0,department=employee?departments[(Math.floor(i/72)+i)%5]:null,jobRole=employee?employeeRoles[(Math.floor(i/72)+i)%5]:null;return{id:'U'+String(i+1).padStart(4,'0'),name:pick(['林','陈','张','王','刘','李','赵','周','徐','吴'])+pick(['晓','明','子','雨','思','一','嘉','晨'])+pick(['宁','远','辰','怡','宇','安','颖','然']),orgId:employee?'MLK':org.id,identity:employee?'员工':'经销商',department,jobRole,employeeNumber:employee?'M'+String(i+1).padStart(5,'0'):null,registered:i<230?addDays('2026-04-01',int(0,90)):addDays('2026-07-01',int(0,114)),openingCredits:int(0,24)*10,openingGrowth:int(0,80)*10};});
+  const users=Array.from({length:360},(_,i)=>{const org=organizations[i%12],employee=Math.floor(i/12)%6===0,salesRegion=employee?salesRegions[(Math.floor(i/72)+i)%salesRegions.length]:null;return{id:'U'+String(i+1).padStart(4,'0'),name:pick(['林','陈','张','王','刘','李','赵','周','徐','吴'])+pick(['晓','明','子','雨','思','一','嘉','晨'])+pick(['宁','远','辰','怡','宇','安','颖','然']),orgId:employee?'MLK':org.id,identity:employee?'员工':'经销商',salesRegion,employeeNumber:employee?'M'+String(i+1).padStart(5,'0'):null,registered:i<230?addDays('2026-04-01',int(0,90)):addDays('2026-07-01',int(0,114)),openingCredits:int(0,24)*10,openingGrowth:int(0,80)*10};});
   const enrollments=[],attempts=[],events=[],ledger=[],knowledge=[],submissions=[],changes=[],agreements=[];
   let eventId=0;
   const event=(uid,type,d,objectId,minutes=0,extra={})=>{if(objectId?.startsWith('K')&&d<addDays('2026-06-01',(Number(objectId.slice(1))-1)*5))return;events.push({id:'EV'+(++eventId),userId:uid,type,date:d,objectId,minutes,...extra});};
@@ -60,7 +59,7 @@
   users.forEach((u,i)=>{const demoteDate=addDays('2026-09-15',i%38);const lastLearn=events.filter(e=>e.userId===u.id&&e.type==='learn'&&e.date<=demoteDate).map(e=>e.date).sort().at(-1)||u.registered;if(i%8===0&&u.registered<=demoteDate&&daysBetween(lastLearn,demoteDate)>=14)ledger.push({id:'L'+ledger.length,userId:u.id,date:demoteDate,type:'等级降级',creditDelta:0,growthDelta:-50,objectId:null});});
   agreements.push({id:'AG1',name:'知识内容上传协议 V1.0',created:'2026-06-01',end:'2026-09-15'},{id:'AG2',name:'知识内容上传协议 V1.1',created:'2026-09-15',end:null});
   const questionBank=Array.from({length:96},(_,i)=>({id:'Q'+(i+1),name:['安装前基层含水率应满足什么要求？','如何选择适合的产品铺装方向？','美利肯产品环保认证的适用范围？','地毯日常维护应避免哪种方式？','该系列产品的标准规格是什么？','客户应用场景应如何匹配产品？'][i%6],courseId:courses[i%12].id,type:['单选','多选','判断'][i%3],source:['手动添加','题库添加','模板导入'][i%3]}));
-  function scopedUsers(f){return users.filter(u=>u.registered<=f.end&&(f.organization==='all'||u.orgId===f.organization)&&(f.identity==='all'||u.identity===f.identity)&&(!f.department||f.department==='all'||u.department===f.department)&&(!f.jobRole||f.jobRole==='all'||u.jobRole===f.jobRole));}
+  function scopedUsers(f){return users.filter(u=>u.registered<=f.end&&(f.organization==='all'||u.orgId===f.organization)&&(f.identity==='all'||u.identity===f.identity)&&(!f.salesRegion||f.salesRegion==='all'||u.salesRegion===f.salesRegion));}
   function analyze(f){
     const matchesCourse=c=>(!f.courseCategory||f.courseCategory==='all'||c.category===f.courseCategory)&&(!f.courseId||f.courseId==='all'||c.id===f.courseId),courseIds=new Set(courses.filter(matchesCourse).map(c=>c.id)),examIds=new Set(exams.filter(e=>courseIds.has(e.courseId)).map(e=>e.id));
     const members=scopedUsers(f),ids=new Set(members.map(u=>u.id)),inRange=d=>d>=f.start&&d<=f.end,byScope=x=>ids.has(x.userId),ev=events.filter(x=>byScope(x)&&inRange(x.date)&&(x.type!=='learn'||courseIds.has(x.objectId)));
@@ -91,5 +90,5 @@
     return{filters:{...f},summary,courseRows,knowledgeRows,examRows,memberRows,orgRows,daily,events:ev,cohort,history,attempts:att,cohortAttempts:cohortAttempt,ledger:led,submissions:periodSubs,allSubmissions:scopedSubs,audits,keywords,submissionStatus,parseStatus,changes:changes.filter(l=>byScope(l)&&inRange(l.date)),agreements:agreements.filter(a=>a.created<=f.end)};
   }
   function previousFilters(f){const n=daysBetween(f.start,f.end)+1;return{...f,start:addDays(f.start,-n),end:addDays(f.start,-1)};}
-  return{TODAY,DATA_START,YEAR_START,departments,employeeRoles,organizations,courses,exams,users,enrollments,attempts,events,ledger,knowledge,submissions,changes,agreements,questionBank,analyze,previousFilters,addDays,daysBetween,pct,sum,unique};
+  return{TODAY,DATA_START,YEAR_START,salesRegions,organizations,courses,exams,users,enrollments,attempts,events,ledger,knowledge,submissions,changes,agreements,questionBank,analyze,previousFilters,addDays,daysBetween,pct,sum,unique};
 });

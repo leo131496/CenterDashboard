@@ -1,7 +1,7 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const D=require('../data.js'),A=require('../chart-data.js');
-const global={start:'2026-10-01',end:D.TODAY,organization:'all',identity:'all',department:'all',jobRole:'all'};
+const global={start:'2026-10-01',end:D.TODAY,organization:'all',identity:'all',salesRegion:'all'};
 const sumRows=c=>D.sum(c.rows,'value');
 test('单图日期、公司和身份筛选不修改全局条件或相邻图的数据',()=>{
  const original={...global},neighbor=A.build('exam-status',global),own=A.build('exam-scores',global,{start:'2026-10-08',end:'2026-10-20',organization:'ORG1',identity:'经销商'});
@@ -23,6 +23,10 @@ test('单图条件只缩小全局范围，校验拒绝越界日期、身份及�
  assert(A.validate(global,{start:'2026-09-01'}));assert(A.validate(global,{start:'2026-10-20',end:'2026-10-10'}));
  assert(A.validate(fixed,{identity:'员工'}));assert(A.validate(fixed,{organization:'ORG2'}));
  assert(A.validate(global,{organization:'MLK',identity:'经销商'}));
+ assert(A.validate({...global,identity:'员工',salesRegion:'华南'},{salesRegion:'西南'}));
+ assert(A.validate(global,{identity:'经销商',salesRegion:'华南'}));
+ assert(A.validate(global,{identity:'员工',salesRegion:'华东'}));
+ assert.equal(A.validate(global,{identity:'员工',salesRegion:'华南'}),'');
  assert(A.validate(global,{courseCategory:'安装培训',courseId:'C1'},A.catalog['exam-scores']));
  const effective=A.effective(fixed,{identity:'员工',organization:'MLK',start:'2026-09-01',end:'2026-11-01'});
  assert.equal(effective.organization,'ORG1');assert.equal(effective.identity,'经销商');assert.equal(effective.start,global.start);assert.equal(effective.end,global.end);
@@ -40,11 +44,11 @@ test('单图趋势按日期和人员事实重算，课程筛选不会包含其�
  for(const day of chart.rows){const raw=D.events.filter(e=>ids.has(e.userId)&&e.objectId==='C1'&&e.type==='learn'&&e.date===day.date);assert.equal(day.learners,new Set(raw.map(e=>e.userId)).size);}
  assert(chart.model.events.filter(e=>e.type==='learn').every(e=>e.objectId==='C1'));
 });
-test('公司和部门图的任务与人员下钻继承单图范围，不引入经销商岗位',()=>{
+test('公司和销售区域图的任务与人员下钻继承单图范围，不引入经销商岗位',()=>{
  const chart=A.build('company-ranking',global,{organization:'ORG1',courseCategory:'安装培训'});
- assert.equal(chart.rows.length,1);assert(chart.rows[0].people.every(u=>u.orgId==='ORG1'&&u.jobRole===null));
+ assert.equal(chart.rows.length,1);assert(chart.rows[0].people.every(u=>u.orgId==='ORG1'&&!('jobRole' in u)));
  assert(chart.rows[0].tasks.every(e=>D.courses.find(c=>c.id===e.courseId).category==='安装培训'));
- const dept=A.build('employee-required',global,{department:'销售与渠道部'});assert.equal(dept.rows.length,1);assert(dept.rows[0].people.every(u=>u.identity==='员工'&&u.department==='销售与渠道部'));
+ const region=A.build('employee-required',global,{salesRegion:'华南'});assert.equal(region.rows.length,1);assert(region.rows[0].people.every(u=>u.identity==='员工'&&u.salesRegion==='华南'));
 });
 test('单图导出保留图内分类、数值和矩阵分子分母，无记录时分布总量为0',()=>{
  const c=A.build('exam-scores',global,{courseId:'C1'}),exported=A.exportData(c);assert.equal(exported.rows.length,4);assert.equal(D.sum(exported.rows,'value'),sumRows(c));

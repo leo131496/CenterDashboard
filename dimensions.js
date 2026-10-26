@@ -8,7 +8,7 @@
     const categories=D.unique(D.courses.map(c=>c.category));
     const people=model.memberRows.map(u=>{
       const tasks=model.cohort.filter(e=>e.userId===u.id),done=tasks.filter(e=>e.completed&&e.completed<=model.filters.end),attempts=latest(model.cohortAttempts.filter(e=>e.userId===u.id)),passed=attempts.filter(e=>e.score>=60),ev=model.events.filter(e=>e.userId===u.id),minutes=D.sum(ev.filter(e=>e.type==='learn'),'minutes'),required=tasks.filter(e=>D.courses.find(c=>c.id===e.courseId).required==='必修'),requiredDone=required.filter(e=>e.completed&&e.completed<=model.filters.end);
-      return {...u,active:active.has(u.id),assigned:tasks.length,finished:done.length,completion:D.pct(done.length,tasks.length),attempted:attempts.length,passed:passed.length,passRate:D.pct(passed.length,attempts.length),minutes,hours:round(minutes/60),required:required.length,requiredDone:requiredDone.length,requiredRate:D.pct(requiredDone.length,required.length),reads:ev.filter(e=>e.type==='read').length,comments:ev.filter(e=>e.type==='comment').length,contributions:model.submissions.filter(s=>s.userId===u.id&&!s.draft&&model.submissionStatus(s)==='通过').length,category:u.identity==='员工'?u.jobRole:u.org,tasks,competencies:categories.map(category=>{const ts=tasks.filter(e=>D.courses.find(c=>c.id===e.courseId).category===category);return{category,assigned:ts.length,completed:ts.filter(e=>e.completed&&e.completed<=model.filters.end).length};})};
+      return {...u,active:active.has(u.id),assigned:tasks.length,finished:done.length,completion:D.pct(done.length,tasks.length),attempted:attempts.length,passed:passed.length,passRate:D.pct(passed.length,attempts.length),minutes,hours:round(minutes/60),required:required.length,requiredDone:requiredDone.length,requiredRate:D.pct(requiredDone.length,required.length),reads:ev.filter(e=>e.type==='read').length,comments:ev.filter(e=>e.type==='comment').length,contributions:model.submissions.filter(s=>s.userId===u.id&&!s.draft&&model.submissionStatus(s)==='通过').length,category:u.identity==='员工'?u.salesRegion:u.org,tasks,competencies:categories.map(category=>{const ts=tasks.filter(e=>D.courses.find(c=>c.id===e.courseId).category===category);return{category,assigned:ts.length,completed:ts.filter(e=>e.completed&&e.completed<=model.filters.end).length};})};
     });
     function aggregate(rows){
       const value=key=>D.sum(rows,key),tasks=rows.flatMap(p=>p.tasks),learners=rows.filter(p=>p.minutes>0).length;
@@ -17,9 +17,8 @@
     const dealers=people.filter(p=>p.identity==='经销商'),employees=people.filter(p=>p.identity==='员工');
     const group=(values,key,rows)=>values.map(name=>({id:name,name,...aggregate(rows.filter(p=>p[key]===name))})).filter(r=>r.members>0);
     const companies=D.organizations.filter(o=>o.kind==='dealer').map(o=>({...o,...aggregate(dealers.filter(p=>p.orgId===o.id))})).filter(o=>o.members).sort((a,b)=>b.completion-a.completion);
-    const departments=group(D.departments,'department',employees).sort((a,b)=>b.requiredRate-a.requiredRate);
-    const roles=group(D.employeeRoles,'jobRole',employees);
-    return{people,dealers,employees,companies,departments,roles,categories,aggregate,all:aggregate(people),dealer:aggregate(dealers),employee:aggregate(employees)};
+    const salesRegions=group(D.salesRegions,'salesRegion',employees).sort((a,b)=>b.requiredRate-a.requiredRate);
+    return{people,dealers,employees,companies,salesRegions,categories,aggregate,all:aggregate(people),dealer:aggregate(dealers),employee:aggregate(employees)};
   }
   return{build,latest};
 });
