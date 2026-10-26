@@ -520,3 +520,17 @@ footer button{font-size:9px}
 .cell-note{color:#8fa17e}
 .row-subtitle{color:#8c9c7d}
 .table-action{color:#4f794d}
+
+/* V2.1: learning themes replace unsupported dealer job segmentation. */
+.theme-completion{padding-top:22px}
+.theme-row{display:grid;grid-template-columns:minmax(100px,1fr) minmax(90px,1.4fr) 56px;gap:22px;align-items:center;padding:19px 0;border-bottom:1px solid #edf0e7}
+.theme-row:last-child{border:0}
+.theme-row strong{display:block;font-size:13px;font-weight:500;color:#526f4a}
+.theme-row span{display:block;font-size:10px;color:#91a280;margin-top:7px}
+.theme-track{height:7px;background:#eef3e8;border-radius:3px;overflow:hidden}
+.theme-track i{display:block;height:100%;background:#78a38a;border-radius:3px}
+.theme-row b{font-size:19px;color:#537a49;font-weight:500;text-align:right}
+.content-scope{display:flex;align-items:baseline;gap:16px;border:1px solid #dee8d6;border-left:3px solid #749c72;border-radius:5px;background:#eff4e9;padding:15px 19px;margin-bottom:23px;font-size:12px;color:#7c906c;line-height:1.9}
+.content-scope strong{font-weight:500;white-space:nowrap;color:#57774b}
+.sample-range-note{color:#a38558}
+@media(max-width:760px){.theme-row{grid-template-columns:minmax(85px,1fr) minmax(55px,1fr) 45px;gap:14px;padding:18px 0}.theme-row strong{font-size:12px}.theme-row span{font-size:9px}.theme-row b{font-size:17px}.content-scope{font-size:10px;padding:13px 15px;gap:10px;align-items:flex-start}.period-switch button{padding-left:10px;padding-right:10px}}

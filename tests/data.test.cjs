@@ -1,7 +1,7 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const D=require('../data.js');
-const filters={start:'2026-10-01',end:D.TODAY,region:'all',organization:'all',identity:'all'};
+const filters={start:'2026-10-01',end:D.TODAY,organization:'all',identity:'all'};
 const a=D.analyze(filters);
 
 test('课程及考试漏斗使用同一任务批次，分子逐层递减',()=>{
@@ -31,16 +31,16 @@ test('日期筛选不泄露未来成绩、等级或审核结果',()=>{
   b.allSubmissions.filter(s=>s.reviewed>f.end&&!s.draft).forEach(s=>assert.equal(b.submissionStatus(s),'待审核'));
   b.memberRows.forEach(u=>assert.equal(u.credits,u.openingCredits+D.sum(D.ledger.filter(l=>l.userId===u.id&&l.date<=f.end),'creditDelta')));
 });
-test('企业、区域、身份同时筛选，所有事实记录属于筛选人群',()=>{
-  const b=D.analyze({...filters,region:'华东',organization:'ORG1',identity:'经销商'});
+test('企业与身份同时筛选，所有事实记录属于筛选人群',()=>{
+  const b=D.analyze({...filters,organization:'ORG1',identity:'经销商'});
   assert(b.memberRows.length>0);
-  assert(b.memberRows.every(u=>u.region==='华东'&&u.orgId==='ORG1'&&u.identity==='经销商'));
+  assert(b.memberRows.every(u=>u.orgId==='ORG1'&&u.identity==='经销商'));
   const ids=new Set(b.memberRows.map(u=>u.id));
   for(const list of [b.events,b.cohort,b.ledger,b.attempts,b.allSubmissions])assert(list.every(x=>ids.has(x.userId)));
   assert.equal(b.orgRows.length,1);
 });
 test('无匹配人群与零分母返回有效零值',()=>{
-  const b=D.analyze({...filters,region:'华东',organization:'ORG12'});
+  const b=D.analyze({...filters,organization:'UNKNOWN'});
   assert.equal(b.summary.members,0);
   for(const value of Object.values(b.summary))assert(Number.isFinite(value));
   assert.equal(b.summary.completion,0);assert.equal(b.summary.passRate,0);assert.equal(b.summary.active,0);
@@ -88,17 +88,17 @@ test('个人、公司与员工维度的人数及任务汇总守恒，内部员�
   assert.equal(dimensions.dealers.length,300);assert.equal(dimensions.employees.length,60);
   assert.equal(dimensions.companies.length,12);assert.equal(dimensions.departments.length,5);
   assert(dimensions.employees.every(u=>u.orgId==='MLK'&&u.department&&u.employeeNumber));
-  assert(dimensions.dealers.every(u=>u.orgId!=='MLK'&&!u.department&&!u.employeeNumber));
+  assert(dimensions.dealers.every(u=>u.orgId!=='MLK'&&!u.department&&!u.employeeNumber&&u.jobRole===null));
+  assert(D.users.every(u=>!('region' in u)));assert(D.organizations.every(o=>!('region' in o)));assert.equal(dimensions.roles.reduce((n,r)=>n+r.members,0),60);
   assert.equal(D.sum(dimensions.companies,'members'),dimensions.dealers.length);
   assert.equal(D.sum(dimensions.departments,'members'),dimensions.employees.length);
-  assert.equal(D.sum(dimensions.regions,'members'),a.summary.members);
   assert.equal(dimensions.all.assigned,a.summary.enrollments);
   assert.equal(dimensions.all.finished,a.summary.completed);
   assert.equal(dimensions.all.passed,a.summary.passed);
   assert.equal(dimensions.all.minutes,a.summary.minutes);
 });
 test('公司与部门比率来自任务分子分母，不平均个人百分比',()=>{
-  for(const g of [...dimensions.companies,...dimensions.departments,...dimensions.regions]){
+  for(const g of [...dimensions.companies,...dimensions.departments]){
     assert.equal(g.completion,D.pct(D.sum(g.people,'finished'),D.sum(g.people,'assigned')));
     assert.equal(g.requiredRate,D.pct(D.sum(g.people,'requiredDone'),D.sum(g.people,'required')));
     assert.equal(g.passRate,D.pct(D.sum(g.people,'passed'),D.sum(g.people,'attempted')));
@@ -106,9 +106,9 @@ test('公司与部门比率来自任务分子分母，不平均个人百分比',
     assert.equal(g.finished,D.sum(g.competencies,'completed'));
   }
 });
-test('员工部门、岗位、区域交叉筛选传递至全部事实记录',()=>{
-  const sample=D.users.find(u=>u.identity==='员工'),b=D.analyze({...filters,identity:'员工',organization:'MLK',region:sample.region,department:sample.department,jobRole:sample.jobRole}),p=P.build(b);
-  assert(p.people.length>0);assert(p.people.every(u=>u.department===sample.department&&u.jobRole===sample.jobRole&&u.region===sample.region));
+test('员工部门、岗位交叉筛选传递至全部事实记录',()=>{
+  const sample=D.users.find(u=>u.identity==='员工'),b=D.analyze({...filters,identity:'员工',organization:'MLK',department:sample.department,jobRole:sample.jobRole}),p=P.build(b);
+  assert(p.people.length>0);assert(p.people.every(u=>u.department===sample.department&&u.jobRole===sample.jobRole));
   assert.equal(p.companies.length,0);assert.equal(p.dealers.length,0);
   const ids=new Set(p.people.map(u=>u.id));
   for(const facts of [b.events,b.cohort,b.attempts,b.ledger,b.allSubmissions])assert(facts.every(f=>ids.has(f.userId)));
@@ -118,4 +118,16 @@ test('无任务人群在组织热力图与比率中保持零值',()=>{
   const p=P.build(D.analyze({...filters,start:'2026-04-01',end:'2026-04-01'}));
   assert.equal(p.all.assigned,0);assert.equal(p.all.completion,0);
   for(const g of [...p.companies,...p.departments])assert(g.competencies.every(c=>c.assigned===0&&c.rate===0));
+});
+
+
+test('本年度从1月1日查询，汇总覆盖截至数据截止日的任务、行为与公司',()=>{
+  const f={...filters,start:D.YEAR_START},m=D.analyze(f),p=P.build(m);
+  assert.equal(m.filters.start,'2026-01-01');assert.equal(m.daily.length,D.daysBetween(D.YEAR_START,D.TODAY)+1);
+  assert.equal(m.summary.enrollments,D.enrollments.filter(e=>e.assigned<=D.TODAY).length);
+  assert.equal(m.summary.reads,D.events.filter(e=>e.type==='read'&&e.date<=D.TODAY).length);
+  assert.equal(p.all.assigned,D.sum(p.companies,'assigned')+p.employee.assigned);
+  assert.equal(p.all.finished,D.sum(p.companies,'finished')+p.employee.finished);
+  assert(m.summary.enrollments>=a.summary.enrollments);
+  const prior=D.previousFilters(f);assert(prior.end<D.DATA_START);assert.equal(D.analyze(prior).summary.members,0);
 });
