@@ -1,13 +1,14 @@
 {
   "name": "milliken-center-dashboard",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "private": true,
   "description": "美利肯学习成长中心多维学习成长驾驶舱交互 Demo",
   "scripts": {
     "dev": "node server.mjs",
     "start": "node server.mjs",
-    "test": "node --test tests/data.test.cjs",
-    "test:ui": "node tests/ui.cjs"
+    "test": "node --test tests/data.test.cjs tests/charts.test.cjs",
+    "test:ui": "node tests/ui.cjs",
+    "test:charts-ui": "node tests/charts-ui.cjs"
   },
   "devDependencies": { "playwright": "^1.58.0" },
   "engines": { "node": ">=20" }
