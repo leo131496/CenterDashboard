@@ -2,7 +2,7 @@
 (function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory(require('./data.js'),require('./dimensions.js'));else root.ChartAnalytics=factory(root.DemoData,root.Perspectives);})(typeof globalThis!=='undefined'?globalThis:this,function(D,P){
  'use strict';
  const categories=D.unique(D.courses.map(c=>c.category));
- const colors=['#d97751','#2e8076','#809aa5','#b4a083','#83916b','#a8b8cd'];
+ const colors=['#00378c','#3385cc','#7695c0','#6d73ae','#a4c3e7','#4c65a5'];
  const catalog={
   'overview-activity':{title:'学习参与趋势',kind:'trend',subtitle:'每日活跃人数与课程学习人数 · 同一学员每天去重'},
   'overview-companies':{title:'渠道公司 · 学习表现',kind:'ranking',subtitle:'按本期任务完成率排序，展示前6家公司',identity:'经销商',course:true,drill:'company'},
@@ -85,8 +85,8 @@
    case 'growth-levels':distribution(['L1 启航者','L2 实干家','L3 领航员','L4 登峰者'].map(name=>({name,value:m.memberRows.filter(u=>u.level===name).length})),'学员总数');break;
    case 'growth-sources':out.rows=D.unique(m.ledger.map(l=>l.type)).filter(t=>t!=='等级降级').map(name=>({name,value:D.sum(m.ledger.filter(l=>l.type===name),'creditDelta')}));break;
    case 'growth-badges':out.rows=['学习启航','学习达人','认证先锋','知识分享者'].map(name=>({name,value:m.memberRows.filter(u=>u.badges.includes(name)).length}));break;
-   case 'governance-review':distribution([{name:'已通过',value:submissions.filter(r=>m.submissionStatus(r)==='通过').length,color:colors[1]},{name:'待审核',value:submissions.filter(r=>m.submissionStatus(r)==='待审核').length,color:colors[0]},{name:'已驳回',value:submissions.filter(r=>m.submissionStatus(r)==='驳回').length,color:'#d79991'}],'本期投稿');break;
-   case 'governance-parse':distribution([{name:'解析成功',value:submissions.filter(r=>m.parseStatus(r)==='成功').length,color:colors[1]},{name:'识别中',value:submissions.filter(r=>m.parseStatus(r)==='识别中').length,color:colors[2]},{name:'解析失败',value:submissions.filter(r=>m.parseStatus(r)==='失败').length,color:'#d79991'}],'解析任务');break;
+   case 'governance-review':distribution([{name:'已通过',value:submissions.filter(r=>m.submissionStatus(r)==='通过').length,color:colors[1]},{name:'待审核',value:submissions.filter(r=>m.submissionStatus(r)==='待审核').length,color:colors[0]},{name:'已驳回',value:submissions.filter(r=>m.submissionStatus(r)==='驳回').length,color:'#b95063'}],'本期投稿');break;
+   case 'governance-parse':distribution([{name:'解析成功',value:submissions.filter(r=>m.parseStatus(r)==='成功').length,color:colors[1]},{name:'识别中',value:submissions.filter(r=>m.parseStatus(r)==='识别中').length,color:colors[2]},{name:'解析失败',value:submissions.filter(r=>m.parseStatus(r)==='失败').length,color:'#b95063'}],'解析任务');break;
   }
   return out;
  }
