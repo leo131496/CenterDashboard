@@ -56,3 +56,11 @@ test('单图导出保留图内分类、数值和矩阵分子分母，无记录�
  assert(rows.length>0);assert(rows.every(r=>r.category==='安装培训'));assert.equal(D.sum(rows,'assigned'),heat.rows[0].assigned);
  const empty=A.build('exam-scores',{...global,start:'2026-01-01',end:'2026-01-02'});assert.equal(sumRows(empty),0);
 });
+
+test('顶部人员条件传递至单图课程与考试分析和导出，清除单图条件也不扩大人员范围',()=>{
+ const selected=D.users.find(u=>u.orgId==='ORG1'&&u.identity==='经销商'),scope={...global,identity:'经销商',organization:'ORG1',userId:selected.id};
+ for(const local of [{},{courseCategory:'产品系列'},{start:'2026-10-10'}]){
+  const chart=A.build('exam-status',scope,local);assert.equal(chart.filters.userId,selected.id);assert.equal(chart.model.summary.members,1);assert(chart.model.cohort.every(e=>e.userId===selected.id));assert.equal(D.sum(A.exportData(chart).rows,'value'),chart.model.summary.enrollments);
+ }
+ const baseline=A.build('dealer-themes',scope);assert.equal(baseline.model.summary.members,1);assert(baseline.perspectives.people.every(u=>u.id===selected.id));
+});

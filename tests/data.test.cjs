@@ -134,3 +134,14 @@ test('本年度从1月1日查询，汇总覆盖截至数据截止日的任务、
   assert(m.summary.enrollments>=a.summary.enrollments);
   const prior=D.previousFilters(f);assert(prior.end<D.DATA_START);assert.equal(D.analyze(prior).summary.members,0);
 });
+
+test('经销商人员按唯一编号筛选，学习、考试与成长事实隔离且不突破公司范围',()=>{
+  const selected=D.users.find(u=>u.identity==='经销商'&&u.orgId==='ORG1'),f={...filters,identity:'经销商',organization:'ORG1',userId:selected.id},m=D.analyze(f),p=P.build(m);
+  assert.equal(m.summary.members,1);assert.deepEqual(m.memberRows.map(u=>u.id),[selected.id]);assert.equal(p.dealer.members,1);assert.equal(p.companies.length,1);
+  for(const rows of [m.events,m.cohort,m.history,m.attempts,m.cohortAttempts,m.ledger,m.allSubmissions])assert(rows.every(r=>r.userId===selected.id));
+  assert.equal(m.summary.enrollments,D.enrollments.filter(e=>e.userId===selected.id&&e.assigned>=f.start&&e.assigned<=f.end).length);
+  assert.equal(p.all.assigned,m.summary.enrollments);assert.equal(p.all.finished,m.summary.completed);assert.equal(p.all.passed,m.summary.passed);
+  assert.equal(D.previousFilters(f).userId,selected.id);
+  assert.equal(D.analyze({...f,organization:'ORG2'}).summary.members,0);assert.equal(D.analyze({...f,identity:'员工'}).summary.members,0);
+  assert.equal(D.analyze({...f,end:D.addDays(selected.registered,-1),start:D.YEAR_START}).summary.members,0);
+});
